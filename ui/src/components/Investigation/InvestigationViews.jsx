@@ -9,6 +9,7 @@ import CollectionOverviewMode from 'components/Collection/CollectionOverviewMode
 import CollectionStatisticsGroup from 'components/Collection/CollectionStatisticsGroup';
 import CollectionMappingsMode from 'components/Collection/CollectionMappingsMode';
 import CollectionEntitiesMode from 'components/Collection/CollectionEntitiesMode';
+import CollectionReconcileMode from 'components/Collection/CollectionReconcileMode';
 import CollectionXrefMode from 'components/Collection/CollectionXrefMode';
 import CollectionEntitySetsIndexMode from 'components/Collection/CollectionEntitySetsIndexMode';
 import CollectionView from 'components/Collection/CollectionView';
@@ -44,6 +45,8 @@ class InvestigationViews extends React.Component {
         return <CollectionDocumentsMode collectionId={collectionId} />;
       case 'entities':
         return <CollectionEntitiesMode collectionId={collectionId} />;
+      case 'reconcile':
+        return <CollectionReconcileMode collectionId={collectionId} />;
       case 'diagrams':
         return <CollectionEntitySetsIndexMode collectionId={collectionId} type="diagram" />;
       case 'lists':
