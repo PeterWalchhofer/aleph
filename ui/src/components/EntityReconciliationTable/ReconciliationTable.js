@@ -46,7 +46,7 @@ import getEntityLink from 'util/getEntityLink';
 export class ReconciliationTable extends Component {
     constructor(props) {
         super(props);
-
+       
 
     }
 
@@ -75,8 +75,8 @@ export class ReconciliationTable extends Component {
                 return ({
                     //...getCellBase('property'),
                     value: values,
-                    data: { entity: entities[ent], property },
-                })
+                    data: { entity:entities[ent], property },
+                  })
             })
             rows.push(propCells)
         }
@@ -88,34 +88,34 @@ export class ReconciliationTable extends Component {
 
     renderColumnHeader = (property) => {
         const { sort, sortColumn } = this.props;
-
+    
         const isSorted = sort && sort.field === property.name;
         const sortIcon = isSorted ? (sort && sort.direction === 'asc' ? 'caret-up' : 'caret-down') : null;
         return (
-            <Button
-                onClick={() => sortColumn(property.name)}
-                minimal
-                fill
-                text={property.label}
-            />
+          <Button
+            onClick={() => sortColumn(property.name)}
+            minimal
+            fill
+            text={property.label}
+          />
         );
-    }
+      }
+    
 
-
-
-    regenerateTable = () => {
-        this.setState({
-            showTopAddRow: false,
-            headerRow: this.getHeaderRow(),
-            entityRows: this.getEntityRows(),
-            createdEntityIds: [],
-        });
-    }
+      
+  regenerateTable = () => {
+    this.setState({
+      showTopAddRow: false,
+      headerRow: this.getHeaderRow(),
+      entityRows: this.getEntityRows(),
+      updatedEntityIds: [],
+    });
+  }
 
     getHeaderRow = () => {
         const { visibleProps } = this.props;
-        const headerCells = visibleProps.map(property => this.renderColumnHeader(property));
-        return [...headerCells];
+        const headerCells = visibleProps.map(property =>  this.renderColumnHeader(property));
+        return [ ...headerCells];
     }
 
 
@@ -124,14 +124,21 @@ export class ReconciliationTable extends Component {
     render() {
         const rows = this.entities2rows()
         console.log(rows)
-        return <table>
-            <tr>
-                <th>
-                    {this.getHeaderRow().map(col => <th>{col}</th>)}
-                </th>
+        return (
+            <table>
+            <thead>
+            <tr key={0}>
+                {this.getHeaderRow().map(col => <th>{col}</th>)}
             </tr>
-            {this.entities2rows().map(col => <td>{col}</td>)}
+            </thead>
+            <tbody>
+            {this.entities2rows().map(row => 
+                <tr>{row.map(col => <td>{col.value}</td>)}</tr>)
+            }
+            </tbody>
         </table>
+
+        )
     }
 }
 

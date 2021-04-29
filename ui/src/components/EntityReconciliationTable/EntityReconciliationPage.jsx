@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { Component, useEffect, useState } from "react";
 import { defineMessages, injectIntl } from "react-intl";
 import { Divider } from "@blueprintjs/core";
 import _ from "lodash";
@@ -31,6 +31,7 @@ import EntityReconcileButton from "components/Toolbar/EntityReconcileButton";
 import QueryNextButton from "./QueryNextButton";
 import { entitySetItemsQuery } from "queries";
 import ReconciliationTable from "./ReconciliationTable";
+import ReconcApi from "./ReconciliationApi";
 
 const messages = defineMessages({
   search_placeholder: {
@@ -64,58 +65,58 @@ const messages = defineMessages({
   },
 });
 
-export class EntityReconciliationPage extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      visibleProps: [],
-      entities: this.props.result.results,
-    };
+export function EntityReconciliationPage(props) {
+    const [visibleProps, setVisibleProps] = useState([])
+    const [reconciled, setReconciled] = useState([])
+    const reconcApi = new ReconcApi()
 
-    this.updateQuery = this.updateQuery.bind(this);
-    this.updateSelection = this.updateSelection.bind(this);
-    this.getEntity = this.getEntity.bind(this);
-  }
+    const {result} = props
+    const entities = result.results.slice(result.offset)
+  // TODO create query from entities and add to row
+  
 
-  componentDidMount() {
-    const { query } = this.props;
+  useEffect(()=> {
+    fetchIfNeeded();
+  },[]);
 
-    //this.updateQuery(query.setPlain('limit', 999))
-
-    this.fetchIfNeeded();
-  }
-
-  componentDidUpdate(prevState, state) {
-
-    const {result} = prevState
+  useEffect(() => {
+    const {result} = props
     console.log("RESULT LENGTH", result.results.length)
-    console.log("STATE LENGTH", state)
-    //console.log("STATE LENGTH", state.result.results.length)
-    const entitiesAdded = result.results.length > this.state.entities;
+
+
+    const visibleProps = getVisibleProperties(result.results);
+    console.log("VISIBLE PROPS", visibleProps)
+    setVisibleProps(visibleProps || [])
+    console.log(visibleProps)
+    fetchReconciliation()
+  }, [props.result.results]);
+
+
+  async function fetchReconciliation(){
+    setReconciled(reconcApi.fetchReconciled(entities))
+  }
+
+  async function fetchIfNeeded() {
+    const { query, queryEntities } = props;
+    //const query_limited = query.setPlain("limit", 999);
+    await queryEntities({ query });
     
-    if (entitiesAdded){
-      const visibleProps = this.getVisibleProperties(this.props.result.results);
-      this.setState({visibleProps, entities: result.results})
-      console.log(visibleProps)
+    
+  };
+
+  function onEntityClick(entity) {
+    if (entity) {
+      const { history } = props;
+      history.push(getEntityLink(entity));
     }
   }
 
-  async fetchIfNeeded() {
-    const { query, result } = this.props;
-    const query_limited = query.setPlain("limit", 999);
-    await this.props.queryEntities({ query: query_limited });
-      
-    
-  }
-
-  getVisibleProperties(entities) {
+  function getVisibleProperties(entities) {
     if (!entities.length) {
       return;
     }
-    const { schema } = this.props;
+    const { schema } = props;
 
-    console.log(entities);
-    console.log(entities);
     const requiredProps = schema.required.map((name) =>
       schema.getProperty(name)
     );
@@ -134,8 +135,8 @@ export class EntityReconciliationPage extends Component {
     return fullList.filter((prop) => !prop.stub && !prop.hidden);
   }
 
-  updateQuery(newQuery) {
-    const { history, location } = this.props;
+  function updateQuery(newQuery) {
+    const { history, location } = props;
     history.push({
       pathname: location.pathname,
       search: newQuery.toLocation(),
@@ -143,42 +144,29 @@ export class EntityReconciliationPage extends Component {
     });
   }
 
-  updateSelection(entityIds, newVal) {
-    this.setState(({ selection }) => {
-      let newSelection;
-      if (newVal) {
-        newSelection = [...new Set([...selection, ...entityIds])];
-      } else {
-        newSelection = selection.filter((id) => entityIds.indexOf(id) < 0);
-      }
-      return { selection: newSelection };
-    });
-  }
+  function getEntity(entityId) {
+    const {result} = props
+    return result.results.find(({ id }) => entityId === id);
+  };
 
-  getEntity(entityId) {
-    return this.props.result.results.find(({ id }) => entityId === id);
-  }
-
-  render() {
-    console.log(this.state)
-    //this.getVisibleProperties()
+  
+    
     const {
       collection,
       entityManager,
       query,
       intl,
-      result,
       schema,
       isEntitySet,
       sort,
       updateStatus,
       writeable,
-    } = this.props;
+      queryEntities
+    } = props;
 
-    const visitEntity = schema.isThing() ? this.onEntityClick : undefined;
+    const visitEntity = schema.isThing() ? onEntityClick : undefined;
     const showEmptyComponent = result.total === 0 && query.hasQuery();
 
-    console.log(this.props);
     return (
       <div className="EntityTable">
         <div className="EntityTable__content">
@@ -193,21 +181,23 @@ export class EntityReconciliationPage extends Component {
           {!showEmptyComponent && (
             <>
             <ReconciliationTable
-                entities={this.state.entities}
-                visibleProps={this.state.visibleProps}
+                entities={entities}
+                visibleProps={visibleProps}
                 />
-              {/*<QueryInfiniteLoad
+              <QueryNextButton
                 query={query}
                 result={result}
-                fetch={this.props.queryEntities}
-              />*/}
+                fetch={queryEntities}
+                loadOnScroll={false}
+              
+              />
             </>
           )}
         </div>
-      </div>
-    );
-  }
-}
+      </div>)
+    
+          }
+
 
 const mapStateToProps = (state, ownProps) => {
   const { query } = ownProps;

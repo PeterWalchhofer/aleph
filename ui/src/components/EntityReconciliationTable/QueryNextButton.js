@@ -22,6 +22,8 @@ class QueryNextButton extends Component {
   getMoreResults() {
     const { query, result } = this.props;
     this.props.fetch({ query, result, next: result.next });
+    console.log("MOAR", result);
+    console.log("QUERY", query)
   }
 
   fetchIfNeeded() {
@@ -35,7 +37,6 @@ class QueryNextButton extends Component {
     
     const { loadOnScroll = true, result } = this.props;
     const canLoadMore = result && result.next && !result.isPending && !result.isError && result.results.length < result.total;
-
     if (canLoadMore) {
       if (loadOnScroll) {
         return (
@@ -54,7 +55,7 @@ class QueryNextButton extends Component {
             >
               <FormattedMessage
                 id="screen.load_more"
-                defaultMessage="Load more"
+                defaultMessage="Next"
               />
             </Button>
           </div>
