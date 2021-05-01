@@ -3,6 +3,7 @@ import { compose } from 'redux';
 import { connect } from 'react-redux';
 import { withRouter } from 'react-router';
 import queryString from 'query-string';
+import ReconcApi from "../EntityReconciliationTable/ReconciliationApi";
 
 //import EntityTable from 'components/EntityTable/EntityTable';
 import { selectCollection, selectModel } from 'selectors';
@@ -12,6 +13,9 @@ import EntityReconciliationPage from 'components/EntityReconciliationTable/Entit
 class CollectionReconcileMode extends React.PureComponent {
   render() {
     const { activeSchema, collection, querySchemaEntities } = this.props;
+    this.state = {
+      reconcApi: new ReconcApi("https://wikidata.reconci.link/en/api", "wikidataId")
+    };
 
     return (
       <EntityReconciliationPage
@@ -20,6 +24,7 @@ class CollectionReconcileMode extends React.PureComponent {
         schema={activeSchema}
         writeable={collection.writeable}
         isEntitySet={false}
+        reconcApi={this.state.reconcApi}
       />
     )
   }

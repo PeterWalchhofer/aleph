@@ -21,6 +21,7 @@ import { showErrorToast, showSuccessToast } from 'app/toast';
 import getEntityLink from 'util/getEntityLink';
 
 import './EntityTable.scss';
+import EntityReconcileButton from 'components/Toolbar/EntityReconcileButton';
 
 
 const messages = defineMessages({
@@ -68,6 +69,7 @@ export class EntityTable extends Component {
     this.onDocSelected = this.onDocSelected.bind(this);
     this.getEntity = this.getEntity.bind(this);
     this.clearSelection = this.clearSelection.bind(this);
+    this.navigate = this.navigate.bind(this)
   }
 
   componentDidMount() {
@@ -177,6 +179,16 @@ export class EntityTable extends Component {
     return this.props.result.results.find(({ id }) => entityId === id);
   }
 
+  navigate(mode) {
+    const { history, location } = this.props;
+    const parsedHash = queryString.parse(location.hash);
+    parsedHash.mode = mode;
+    history.push({
+      pathname: location.pathname,
+      hash: queryString.stringify(parsedHash),
+    });
+  }
+
   render() {
     const { collection, entityManager, query, intl, result, schema, isEntitySet, sort, updateStatus, writeable } = this.props;
     const { selection } = this.state;
@@ -208,6 +220,11 @@ export class EntityTable extends Component {
                   onSelect: this.onDocSelected
                 }}
               />
+
+          <EntityReconcileButton
+            actionType="reconcile"
+            navigate={this.navigate}
+          />
               <Divider />
             </>
           )}

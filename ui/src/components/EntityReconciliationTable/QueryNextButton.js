@@ -22,8 +22,6 @@ class QueryNextButton extends Component {
   getMoreResults() {
     const { query, result } = this.props;
     this.props.fetch({ query, result, next: result.next });
-    console.log("MOAR", result);
-    console.log("QUERY", query)
   }
 
   fetchIfNeeded() {

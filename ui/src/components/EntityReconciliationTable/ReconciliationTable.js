@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, useEffect, useState } from 'react';
 import { defineMessages, injectIntl } from 'react-intl';
 import { Divider, Button } from '@blueprintjs/core';
 import _ from 'lodash';
@@ -19,55 +19,34 @@ import { queryEntities } from 'actions';
 import { selectEntitiesResult } from 'selectors';
 import { showErrorToast, showSuccessToast } from 'app/toast';
 import getEntityLink from 'util/getEntityLink';
+import CandidateSelection from './CandidateSelection';
+
+import "./EntityReconciliationPage"
 
 
-//entities2rows()
-
-// function entities2rows(){
-//     const rows = []
-//     console.log(entities)
-//     for (ent in props.entities) {
-//         console.log(ent)
-//         const propCells = visibleProps.map(property => {
-//             let values = ent.getProperty(property.name);
-//             if (property.type.name === 'entity') {
-//               values = values.map((v) => typeof v === 'string' ? v : v.id);
-//             }
-//         })     
-//         rows.push(propCells)                
-//     }
-//     return rows
-
-//     }
+export function ReconciliationTable(props) {
+    const { entities, visibleProps, reconciled } = props
+    const [headerRow, setHeaderRow] = useState([])
+    const [entityRows, setEntityRows] = useState([])
 
 
+    useEffect(() => {
+        console.log(entities, "ENTITIES IN TABLE")
+        setHeaderRow(getHeaderRow())
+        setEntityRows(entities2rows())
+        console.log("RERENDER")
+        //entities2rows()
+    }, [entities, props.reconciled])
 
-
-export class ReconciliationTable extends Component {
-    constructor(props) {
-        super(props);
-       
-
-    }
-
-    componentDidMount() {
-
-    }
-
-    componentDidUpdate() {
-
-    }
-
-    entities2rows() {
-        const { entities, visibleProps } = this.props
+    function entities2rows() {
         const rows = []
-        console.log("ENTITIES")
+        console.log("ENTITIES", entities)
         console.log(entities[0])
-        for (let ent in entities) {
+        entities.forEach((ent, idx) => {
             //console.log(entities[ent])
             //console.log(visibleProps)
             const propCells = visibleProps.map(property => {
-                let values = entities[ent].getProperty(property.name);
+                let values = ent.getProperty(property.name);
                 //console.log(property.type.name)
                 if (property.type.name === 'entity') {
                     values = values.map((v) => typeof v === 'string' ? v : v.id);
@@ -75,71 +54,101 @@ export class ReconciliationTable extends Component {
                 return ({
                     //...getCellBase('property'),
                     value: values,
-                    data: { entity:entities[ent], property },
-                  })
+                    data: { entity: ent, property },
+                })
             })
             rows.push(propCells)
-        }
+        })
         console.log(rows)
         return rows
 
     }
 
 
-    renderColumnHeader = (property) => {
-        const { sort, sortColumn } = this.props;
-    
+    function renderColumnHeader(property) {
+        const { sort, sortColumn } = props;
+
         const isSorted = sort && sort.field === property.name;
         const sortIcon = isSorted ? (sort && sort.direction === 'asc' ? 'caret-up' : 'caret-down') : null;
         return (
-          <Button
-            onClick={() => sortColumn(property.name)}
-            minimal
-            fill
-            text={property.label}
-          />
+            <Button
+                onClick={() => sortColumn(property.name)}
+                minimal
+                fill
+                text={property.label}
+            />
         );
-      }
-    
-
-      
-  regenerateTable = () => {
-    this.setState({
-      showTopAddRow: false,
-      headerRow: this.getHeaderRow(),
-      entityRows: this.getEntityRows(),
-      updatedEntityIds: [],
-    });
-  }
-
-    getHeaderRow = () => {
-        const { visibleProps } = this.props;
-        const headerCells = visibleProps.map(property =>  this.renderColumnHeader(property));
-        return [ ...headerCells];
     }
 
 
+    function getHeaderRow() {
+        const { visibleProps } = props;
+        const headerCells = visibleProps.map(property => renderColumnHeader(property));
+        return ["Reconcile", ...headerCells];
+    }
 
+    function renderValue(entityCell){
+        const propType = entityCell?.data.property.type
+        
+        let propCb = (val) => <span>{val}</span>
+        switch(propType.name){
+            case "url":
+                propCb = (val) => <span><a href={val}>{val}</a></span>
 
-    render() {
-        const rows = this.entities2rows()
-        console.log(rows)
+        }
+        return entityCell.value.map(propCb)
+    }
+
+    function renderRow(entityRow, idx) {
+        const { reconcApi, idProperty, updateEntity } = props
+        const entity = entityRow[0]?.data.entity
+        const cells = []
+        cells.push(
+            <td col={0} row={idx}>
+                <CandidateSelection
+                    candidates={reconciled[entity?.id]}
+                    entity={entity}
+                    reconcApi={reconcApi}
+                    idProperty={idProperty}
+                    updateEntity={updateEntity} />
+
+            </td>
+        )
+        cells.push(entityRow.map((entityCell, colIdx) =>
+            <td row={idx} col={colIdx + 1} >
+                <div className="TableEditor__overflow-container">
+                    <span className="PropertyValues">
+                        {renderValue(entityCell)}
+                    </span>
+                </div>
+            </td>))
         return (
-            <table>
+            <tr>
+                {cells}
+            </tr>)
+
+    }
+    return (
+        <div className="ReconciliationTable">
+        <span className="data-grid-container">
+        
+        <table className="data-grid">
             <thead>
-            <tr key={0}>
-                {this.getHeaderRow().map(col => <th>{col}</th>)}
-            </tr>
+                <tr key={0}>
+                    {headerRow.map(col => <th className="header">{col}</th>)}
+                </tr>
             </thead>
+        
             <tbody>
-            {this.entities2rows().map(row => 
-                <tr>{row.map(col => <td>{col.value}</td>)}</tr>)
-            }
+                {entityRows.map((row, idx) => renderRow(row, idx))}
             </tbody>
         </table>
+        
+        </span>
+        </div>
 
-        )
-    }
+    )
+
 }
 
 

@@ -1,4 +1,4 @@
-import React, { Component, useEffect, useState } from "react";
+import React, { Component, useEffect, useMemo, useState } from "react";
 import { defineMessages, injectIntl } from "react-intl";
 import { Divider } from "@blueprintjs/core";
 import _ from "lodash";
@@ -31,78 +31,87 @@ import EntityReconcileButton from "components/Toolbar/EntityReconcileButton";
 import QueryNextButton from "./QueryNextButton";
 import { entitySetItemsQuery } from "queries";
 import ReconciliationTable from "./ReconciliationTable";
-import ReconcApi from "./ReconciliationApi";
+
 
 const messages = defineMessages({
-  search_placeholder: {
-    id: "entity.manager.search_placeholder",
-    defaultMessage: "Search {schema}",
-  },
   empty: {
     id: "entity.manager.search_empty",
     defaultMessage: "No matching {schema} results found",
   },
-  edge_create_success: {
-    id: "entity.manager.edge_create_success",
-    defaultMessage: "Successfully linked {source} and {target}",
-  },
-  add_to_success: {
-    id: "entity.manager.entity_set_add_success",
-    defaultMessage:
-      "Successfully added {count} {count, plural, one {entity} other {entities}} to {entitySet}",
-  },
-  bulk_import: {
-    id: "entity.viewer.bulk_import",
-    defaultMessage: "Bulk import",
-  },
-  add_link: {
-    id: "entity.viewer.add_link",
-    defaultMessage: "Create link",
-  },
-  add_to: {
-    id: "entity.viewer.add_to",
-    defaultMessage: "Add to...",
-  },
 });
 
 export function EntityReconciliationPage(props) {
-    const [visibleProps, setVisibleProps] = useState([])
-    const [reconciled, setReconciled] = useState([])
-    const reconcApi = new ReconcApi()
+  const [visibleProps, setVisibleProps] = useState([]);
+  const [reconciled, setReconciled] = useState([]);
+  console.log("A");
+  const {reconcApi} = props
 
-    const {result} = props
-    const entities = result.results.slice(result.offset)
-  // TODO create query from entities and add to row
-  
+  const { result } = props;
+ 
+  // Up to date entities from Aleph
+ const entities = result.results.slice(result.offset);
 
-  useEffect(()=> {
-    fetchIfNeeded();
-  },[]);
+  // Slower reloading entities from reconciliation
+  const to_rec_entities = useMemo(() => entities, [
+    result.offset,
+    result.shouldLoad,
+    result.results.length,
+  ]);
 
   useEffect(() => {
-    const {result} = props
-    console.log("RESULT LENGTH", result.results.length)
+    fetchIfNeeded();
+  }, []);
 
+  useEffect(() => {
+    fetchReconciliation();
+  }, [to_rec_entities]);
+
+  useEffect(() => {
+    //console.log(result)
+    const { result } = props;
+    console.log("RESULT LENGTH", result);
 
     const visibleProps = getVisibleProperties(result.results);
-    console.log("VISIBLE PROPS", visibleProps)
-    setVisibleProps(visibleProps || [])
-    console.log(visibleProps)
-    fetchReconciliation()
-  }, [props.result.results]);
+    setVisibleProps(visibleProps || []);
 
+    console.log(result.results);
+  }, [result.results]);
 
-  async function fetchReconciliation(){
-    setReconciled(reconcApi.fetchReconciled(entities))
+  /*   useEffect(() => {
+    if (result.results.shouldLoad){
+      fetchReconciliation();
+    }
+    console.log(props)
+  }, [result.results]); */
+
+  async function fetchReconciliation() {
+    if (!to_rec_entities) {
+      return;
+    }
+    const recon_responses = await reconcApi.fetchReconciled(to_rec_entities);
+
+    const hashed = {};
+    // Combine entities and responses to keep order consistency.
+    recon_responses.forEach((rec, i) => {
+      hashed[to_rec_entities[i].id] = {
+        candidates: rec["result"],
+        entity: to_rec_entities[i],
+        reconId: to_rec_entities[i].getFirst(reconcApi.idProperty),
+      };
+    });
+
+    console.log("2 FETCHRECONCILIATION\n", hashed);
+    setReconciled(hashed);
   }
 
   async function fetchIfNeeded() {
-    const { query, queryEntities } = props;
+    const { query, queryEntities, result } = props;
     //const query_limited = query.setPlain("limit", 999);
-    await queryEntities({ query });
-    
-    
-  };
+    if (result.results.shouldLoad) {
+      await queryEntities({ query });
+      await fetchReconciliation();
+    }
+  }
 
   function onEntityClick(entity) {
     if (entity) {
@@ -145,59 +154,60 @@ export function EntityReconciliationPage(props) {
   }
 
   function getEntity(entityId) {
-    const {result} = props
+    const { result } = props;
     return result.results.find(({ id }) => entityId === id);
-  };
+  }
 
-  
-    
-    const {
-      collection,
-      entityManager,
-      query,
-      intl,
-      schema,
-      isEntitySet,
-      sort,
-      updateStatus,
-      writeable,
-      queryEntities
-    } = props;
+  const {
+    collection,
+    entityManager,
+    query,
+    intl,
+    schema,
+    isEntitySet,
+    sort,
+    updateStatus,
+    writeable,
+    queryEntities,
+    updateEntity,
+  } = props;
 
-    const visitEntity = schema.isThing() ? onEntityClick : undefined;
-    const showEmptyComponent = result.total === 0 && query.hasQuery();
+  const visitEntity = schema.isThing() ? onEntityClick : undefined;
+  const showEmptyComponent = result.total === 0 && query.hasQuery();
 
-    return (
-      <div className="EntityTable">
-        <div className="EntityTable__content">
-          {showEmptyComponent && (
-            <ErrorSection
-              icon="search"
-              title={intl.formatMessage(messages.empty, {
-                schema: schema.plural.toLowerCase(),
-              })}
-            />
-          )}
-          {!showEmptyComponent && (
-            <>
+  return (
+    <div className="EntityTable">
+      <div className="EntityTable__content">
+        {showEmptyComponent && (
+          <ErrorSection
+            icon="search"
+            title={intl.formatMessage(messages.empty, {
+              schema: schema.plural.toLowerCase(),
+            })}
+          />
+        )}
+        {!showEmptyComponent && (
+          <>
             <ReconciliationTable
-                entities={entities}
-                visibleProps={visibleProps}
-                />
-              <QueryNextButton
-                query={query}
-                result={result}
-                fetch={queryEntities}
-                loadOnScroll={false}
-              
-              />
-            </>
-          )}
-        </div>
-      </div>)
-    
-          }
-
+              entities={entities}
+              visibleProps={visibleProps}
+              reconciled={reconciled || {}}
+              reconcApi={reconcApi}
+              idProperty={reconcApi.idProperty}
+              updateEntity={updateEntity}
+            />
+            <QueryNextButton
+              query={query}
+              result={result}
+              fetch={queryEntities}
+              loadOnScroll={false}
+            />
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
 
 const mapStateToProps = (state, ownProps) => {
   const { query } = ownProps;
