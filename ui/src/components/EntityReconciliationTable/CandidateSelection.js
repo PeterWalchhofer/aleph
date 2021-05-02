@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react"
+import React, { useState } from "react"
 import { Spinner } from '@blueprintjs/core';
 import "./Candidate.scss"
 import PreviewBox from "./PreviewBox";
@@ -10,50 +10,47 @@ export default function CandidateSelection(props) {
     const reconId = entity?.getFirst(reconcApi.idProperty)
     const [hoverId, setHoverId] = useState()
 
-
-
     function handleAccept(candidateId) {
-        console.log("FIRE")
         const modified = entity.clone()
         modified.setProperty(idProperty, candidateId)
         updateEntity(modified)
-
     }
+
     function unHover() {
-       setHoverId(undefined)
+        console.log("UNHOVER")
+        setHoverId(undefined)
     }
 
     async function renderTooltip(id) {
-        console.log("MOURSOUVER")
         setHoverId(id)
     }
 
 
     function renderCandidate(candidate) {
-
         const { id, match } = candidate
-        console.log("HOVERSTATE", hoverId)
+
         return (
-            <>
+            <div className="recCandidate" key={id}>
                 {id === hoverId && (
                     <PreviewBox
+
                         url={reconcApi.getPreviewUrl(id)}
                         width={reconcApi.preview["width"]}
                         height={reconcApi.preview["height"]}
                     />
 
                 )}
-                <li key={id + entity.id} className="recCandidate">
+                <li  >
                     <div className="candidateName" onMouseEnter={() => renderTooltip(id)} onMouseLeave={unHover}>
-                        <a href={reconcApi.directLink(id)} target="_blank">{candidate.name}</a></div>
+                        <a href={reconcApi.directLink(id)} target="_blank" rel="noopener noreferrer">{candidate.name}</a></div>
                     <p>Score: {Math.round(candidate.score)}</p>
 
-                    <button className="candidateAccept" onClick={() => handleAccept(id)}>{match ? "✔✔" : "✔"}</button>
-
-
+                    <button className="candidateAccept" onClick={() => handleAccept(id)}>
+                        {match ? "✔✔" : "✔"}
+                    </button>
                 </li>
 
-            </>
+            </div>
         )
     }
     return (
@@ -61,7 +58,8 @@ export default function CandidateSelection(props) {
             {(candidates?.length > 0 & !reconId) ?
                 (
                     <ul>
-                        {candidates.map(candidate => renderCandidate(candidate))}
+                        {candidates.map(candidate => renderCandidate(candidate))
+                            .reduce((acc, el, idx) => acc === null ? [el] : [...acc, <hr key= {idx} />, el], null)}
                     </ul>
                 )
                 : (Array.isArray(candidates) & !reconId) ?
@@ -71,7 +69,7 @@ export default function CandidateSelection(props) {
 
                     : reconId ?
                         (
-                            <p><a href={reconcApi.directLink(reconId)} target="_blank">{entity.getFirst("name")}</a></p>
+                            <p><a href={reconcApi.directLink(reconId)} target="_blank" rel="noopener noreferrer">{entity.getFirst("name")}</a></p>
                         )
                         //else
                         : (

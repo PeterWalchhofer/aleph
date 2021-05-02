@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Spinner } from '@blueprintjs/core';
 
 export default function PreviewBox(props) {
@@ -18,6 +18,7 @@ export default function PreviewBox(props) {
                     </div>)}
 
                 <iframe src={url}
+                    titile="Reconciliation Candidate"
                     frameBorder="0"
                     width={width + 10}
                     height={height + 20}

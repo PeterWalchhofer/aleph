@@ -1,37 +1,24 @@
-import React, { Component, useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { defineMessages, injectIntl } from "react-intl";
-import { Divider } from "@blueprintjs/core";
+
 import _ from "lodash";
 import { compose } from "redux";
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
-import queryString from "query-string";
-import { EdgeCreateDialog, TableEditor } from "@alephdata/react-ftm";
+
 import uniqBy from "lodash/uniqBy";
 
 import entityEditorWrapper from "components/Entity/entityEditorWrapper";
-import { Count, ErrorSection, QueryInfiniteLoad } from "components/common";
-import { DialogToggleButton } from "components/Toolbar";
-import EntitySetSelector from "components/EntitySet/EntitySetSelector";
-import DocumentSelectDialog from "dialogs/DocumentSelectDialog/DocumentSelectDialog";
-import EntityActionBar from "components/Entity/EntityActionBar";
-import EntityDeleteButton from "components/Toolbar/EntityDeleteButton";
+import {  ErrorSection } from "components/common";
+
 import { queryEntities } from "actions";
 import { selectEntitiesResult } from "selectors";
-import { showErrorToast, showSuccessToast } from "app/toast";
 import getEntityLink from "util/getEntityLink";
-import {
-  Entity as FTMEntity,
-  Property as FTMProperty,
-  Schema as FTMSchema,
-  Value,
-} from "@alephdata/followthemoney";
-import "./EntityReconciliationPage.scss";
-import EntityReconcileButton from "components/Toolbar/EntityReconcileButton";
-import QueryNextButton from "./QueryNextButton";
-import { entitySetItemsQuery } from "queries";
-import ReconciliationTable from "./ReconciliationTable";
 
+import "./EntityReconciliationPage.scss";
+import QueryNextButton from "./QueryNextButton";
+import ReconciliationTable from "./ReconciliationTable";
+import ReconciliationApi from "./ReconciliationApi"
 
 const messages = defineMessages({
   empty: {
@@ -40,16 +27,23 @@ const messages = defineMessages({
   },
 });
 
-export function EntityReconciliationPage(props) {
-  const [visibleProps, setVisibleProps] = useState([]);
-  const [reconciled, setReconciled] = useState([]);
-  console.log("A");
-  const {reconcApi} = props
+const reconcConfig = {
+  wikidata: {
+    url: "https://wikidata.reconci.link/en/api",
+    idProperty: "wikidataId"
+  }
+}
 
+
+export function EntityReconciliationPage(props) {
   const { result } = props;
- 
+  const [reconcApi] = useState(new ReconciliationApi(reconcConfig["wikidata"]["url"], reconcConfig["wikidata"]["idProperty"])) 
+  const [isInit, setIsInit] = useState(false)
+
+  
+  
   // Up to date entities from Aleph
- const entities = result.results.slice(result.offset);
+  const entities = result.results.slice(result.offset);
 
   // Slower reloading entities from reconciliation
   const to_rec_entities = useMemo(() => entities, [
@@ -57,32 +51,30 @@ export function EntityReconciliationPage(props) {
     result.shouldLoad,
     result.results.length,
   ]);
+  const [visibleProps, setVisibleProps] = useState(getVisibleProperties(entities));
+  const [reconciled, setReconciled] = useState([]);
+
 
   useEffect(() => {
     fetchIfNeeded();
+    init()
   }, []);
 
   useEffect(() => {
-    fetchReconciliation();
-  }, [to_rec_entities]);
+    isInit && fetchReconciliation();
+  }, [to_rec_entities, isInit]);
 
   useEffect(() => {
-    //console.log(result)
     const { result } = props;
-    console.log("RESULT LENGTH", result);
 
     const visibleProps = getVisibleProperties(result.results);
     setVisibleProps(visibleProps || []);
-
-    console.log(result.results);
   }, [result.results]);
 
-  /*   useEffect(() => {
-    if (result.results.shouldLoad){
-      fetchReconciliation();
-    }
-    console.log(props)
-  }, [result.results]); */
+  async function init(){
+    await reconcApi.fetchServices()
+    setIsInit(true)
+  }
 
   async function fetchReconciliation() {
     if (!to_rec_entities) {
@@ -100,13 +92,12 @@ export function EntityReconciliationPage(props) {
       };
     });
 
-    console.log("2 FETCHRECONCILIATION\n", hashed);
+    console.log("RECONCILED", hashed);
     setReconciled(hashed);
   }
 
   async function fetchIfNeeded() {
     const { query, queryEntities, result } = props;
-    //const query_limited = query.setPlain("limit", 999);
     if (result.results.shouldLoad) {
       await queryEntities({ query });
       await fetchReconciliation();
@@ -122,7 +113,7 @@ export function EntityReconciliationPage(props) {
 
   function getVisibleProperties(entities) {
     if (!entities.length) {
-      return;
+      return [];
     }
     const { schema } = props;
 
@@ -130,8 +121,7 @@ export function EntityReconciliationPage(props) {
       schema.getProperty(name)
     );
     const featuredProps = schema.getFeaturedProperties();
-    //const filledProps = (entities)
-    //.reduce((acc, entity) => [...acc, ...entity.getProperties()]);
+    
     const filledProps = entities
       .map((entity) => entity.getProperties())
       .reduce((acc, props) => [...acc, ...props]);
@@ -159,7 +149,6 @@ export function EntityReconciliationPage(props) {
   }
 
   const {
-    collection,
     entityManager,
     query,
     intl,
@@ -174,7 +163,7 @@ export function EntityReconciliationPage(props) {
 
   const visitEntity = schema.isThing() ? onEntityClick : undefined;
   const showEmptyComponent = result.total === 0 && query.hasQuery();
-
+ console.log(isInit)
   return (
     <div className="EntityTable">
       <div className="EntityTable__content">
@@ -186,7 +175,7 @@ export function EntityReconciliationPage(props) {
             })}
           />
         )}
-        {!showEmptyComponent && (
+        {!showEmptyComponent && isInit && (
           <>
             <ReconciliationTable
               entities={entities}

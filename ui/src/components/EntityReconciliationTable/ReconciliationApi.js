@@ -1,12 +1,9 @@
-import { bind, result, stubString } from "lodash"
-
-
-class ReconcApi {
+class ReconciliationApi {
     constructor(url, idProperty) {
         this.url = url
-        this.fetchServices()
         this.view = ""
-        this.idProperty = idProperty // e.g. wikidataId in schema
+        this.idProperty = idProperty // e.g. wikidataId in FtM schema
+        this.isInit = false
 
         this.mapping = {
             birthDate: "P569",
@@ -31,6 +28,7 @@ class ReconcApi {
             property: indexPage["suggest"]["property"]["services_url"]
         }
         this.view = indexPage["view"]["url"]
+        this.isInit = true
     }
 
     directLink(id) {
@@ -38,31 +36,23 @@ class ReconcApi {
     }
 
     getPreviewUrl(id) {
-        if (!this.preview) {
+        if (!this.isInit) {
+            console.log("PREVIEW ACCESSES BEFORE INITIALIZATION")
             return
         }
-
-        // https://wikidata.reconci.link/en/preview?id={{id}}
-        
-        return this.preview["url"].replace("{{id}}", id) //const result =  await fetch(this.previewUrl.replace("{{id}}", id))
-        //const text = await result.text()
-        //console.log("TÖXT", text)
-        //return text
+        return this.preview["url"].replace("{{id}}", id)
     }
 
     async fetchReconciled(entities) {
-        //const result = await fetch(url)
         const queries = entities.map(entity => this.createQuery(entity, "Q5", this.mapping))
         const batches = this.create_batch_queries(queries)
         const results = []
 
         for (let idx in batches) {
             const result = await this.fetch1Batch(batches[idx])
-            console.log("ORDERED RECONCILITATION:", result)
             results.push(...result)
         }
 
-        console.log("RECONCILIATION RESULT:", results)
         return results
     }
 
@@ -76,11 +66,13 @@ class ReconcApi {
         })
         const reconciled = await result.json()
 
-        // API returns map with keys "q0", "q1",... somehow we need to sort them before putting the results into an array.
+        // API returns map with keys "q0", "q1",... for some reason we need to sort them before putting the results into an array.
         const ordered = Object.keys(reconciled).map(key =>
             Number(key.substr(1))).sort((a, b) => a - b).map(key => reconciled["q" + key])
         return ordered
     }
+
+
     createQuery(entity, targetType, mapping, limit = 10) {
 
         const query_params = {
@@ -105,21 +97,23 @@ class ReconcApi {
     }
 
     create_batch_queries(queries, batch_size = 50) {
-        let start = 0
-        let end = 0 + batch_size
+        let start, end, i
+
         const batches = []
         const max = Math.ceil(queries.length / batch_size)
-        for (const batch_nr in Array.from({ length: max }, (x, i) => i)) {
+
+        for (start = 0, end = batch_size,  i = 0;
+            i < max;
+            i++, start += batch_size, end += batch_size) {
             const batch_query = {}
             queries.slice(start, end).forEach((query, idx) => {
                 batch_query["q" + idx] = query
             })
             batches.push(batch_query)
-            start += batch_size
-            end += batch_size
         }
+       
         return batches
     }
 }
 
-export default ReconcApi;
+export default ReconciliationApi;

@@ -12,10 +12,6 @@ const messages = defineMessages({
 
 
 class EntityReconcileButton extends React.Component {
-  constructor(props) {
-    super(props);
-  }
-
 
   render() {
     const {intl, actionType, navigate } = this.props;
