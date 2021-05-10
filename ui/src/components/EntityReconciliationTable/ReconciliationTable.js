@@ -50,11 +50,13 @@ export function ReconciliationTable(props) {
 
         const isSorted = sort && sort.field === property.name;
         const sortIcon = isSorted ? (sort && sort.direction === 'asc' ? 'caret-up' : 'caret-down') : null;
+
         return (
             <Button
                 onClick={() => sortColumn(property.name)}
                 minimal
                 fill
+                icon={sortIcon}
                 text={property.label}
             />
         );
@@ -83,7 +85,7 @@ export function ReconciliationTable(props) {
             default: 
                 propCb = (val, idx) => <span key={idx}>{val}</span>
         }
-        const separator = <span class="separator"> · </span>
+        const separator = <span className="separator"> · </span>
         const values = entityCell.value
             .map(propCb)
             .reduce((acc, elem) => {

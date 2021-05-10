@@ -16,7 +16,13 @@
   
       .recMatch {
         background-color: #ADDAA4;
+
+        &:hover{
+          background-color: #7cb96f;
+        }
+        
       }
+      
   
     li {
       padding: 5px 0 5px 0;

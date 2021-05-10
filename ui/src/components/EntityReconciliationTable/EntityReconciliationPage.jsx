@@ -13,7 +13,6 @@ import { ErrorSection } from "components/common";
 
 import { queryEntities } from "actions";
 import { selectEntitiesResult } from "selectors";
-import getEntityLink from "util/getEntityLink";
 
 import "./EntityReconciliationPage.scss";
 import QueryNextButton from "./QueryNextButton";
@@ -35,7 +34,7 @@ export function EntityReconciliationPage(props) {
   const { result, schema } = props;
 
   const [mapper, setMapper] = useState()
-  console.log(mapper)
+  console.log(result)
 
   const [reconcApi, setReconcApi] = useState();
   const [isInit, setIsInit] = useState(false);
@@ -127,8 +126,29 @@ export function EntityReconciliationPage(props) {
     setReconciled([])
   }
 
+  function updateQuery(newQuery) {
+    const { history, location } = props;
+    history.push({
+      pathname: location.pathname,
+      search: newQuery.toLocation(),
+      hash: location.hash,
+    });
+  }
 
- // function getPreviousEntities() {}
+  function onSortColumn(newField) {
+    const { query, sort } = props;
+    const { field: currentField, direction } = sort;
+
+    if (currentField !== newField) {
+      return updateQuery(query.sortBy(`properties.${newField}`, 'asc'));
+    }
+
+    // Toggle through sorting states: ascending, descending, or unsorted.
+    updateQuery(query.sortBy(
+      `properties.${currentField}`,
+      direction === 'asc' ? 'desc' : undefined
+    ));
+  }
 
   function getVisibleProperties(entities) {
     if (!entities.length) {
@@ -158,9 +178,11 @@ export function EntityReconciliationPage(props) {
     intl,
     queryEntities,
     updateEntity,
+    sort,
   } = props;
 
   const showEmptyComponent = result.total === 0 && query.hasQuery();
+
 
   return (
     <div className="EntityTable">
@@ -188,6 +210,15 @@ export function EntityReconciliationPage(props) {
               reconcApi={reconcApi}
               idProperty={reconcApi.idProperty}
               updateEntity={updateEntity}
+              sortColumn={onSortColumn}
+              sort={sort}
+            />
+            <QueryNextButton
+              query={query}
+              result={result}
+              fetch={queryEntities}
+              loadOnScroll={false}
+              next={false}
             />
             <QueryNextButton
               query={query}

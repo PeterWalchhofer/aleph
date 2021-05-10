@@ -9,12 +9,10 @@ export default function CandidateSelection(props) {
     const { entity } = props
     const reconId = entity?.getFirst(reconcApi.idProperty)
     const [hoverId, setHoverId] = useState()
-    console.log(candidates)
 
 
     function handleAccept(candidateId) {
         const modified = entity.clone()
-        console.log(entity, idProperty)
         let propVal  = candidateId;
 
         if (idProperty === "opencorporatesUrl"){

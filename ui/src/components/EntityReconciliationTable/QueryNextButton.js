@@ -8,6 +8,7 @@ class QueryNextButton extends Component {
   constructor(props) {
     super(props);
     this.getMoreResults = this.getMoreResults.bind(this);
+    this.getPrev= this.getPrev.bind(this);
   }
 
   componentDidMount() {
@@ -23,6 +24,11 @@ class QueryNextButton extends Component {
     this.props.fetch({ query, result, next: result.next });
   }
 
+  getPrev() {
+    const { query, result } = this.props;
+    this.props.fetch({ query, result, previous: result.previous });
+  }
+
   fetchIfNeeded() {
     const { query, result } = this.props;
     if (result.shouldLoad) {
@@ -32,7 +38,7 @@ class QueryNextButton extends Component {
 
   render() {
     
-    const { loadOnScroll = true, result } = this.props;
+    const { loadOnScroll = true, result, next=true} = this.props;
     const canLoadMore = result && result.next && !result.isPending && !result.isError && result.results.length < result.total;
     if (canLoadMore) {
       if (loadOnScroll) {
@@ -47,12 +53,12 @@ class QueryNextButton extends Component {
         return (
           <div className="QueryInfiniteLoad">
             <Button
-              onClick={this.getMoreResults}
+              onClick={next? this.getMoreResults : this.getPrev}
               className="QueryInfiniteLoad__button"
             >
               <FormattedMessage
                 id="screen.load_more"
-                defaultMessage="Next"
+                defaultMessage={next? "Next ❱": "❰ Previous"}
               />
             </Button>
           </div>
