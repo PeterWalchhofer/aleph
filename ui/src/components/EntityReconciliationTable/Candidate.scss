@@ -13,11 +13,15 @@
       clear: left;
       display: inline-block;
     }
+  
+      .recMatch {
+        background-color: #ADDAA4;
+      }
+  
     li {
       padding: 5px 0 5px 0;
 
-      .candidateAccept {
-      }
+      
       .candidateName {
         padding: 10px 0 10px;
       }

@@ -8,7 +8,7 @@ export default function PreviewBox(props) {
     function onLoad() {
         setIsLoading(false)
     }
-    console.log("PRECVIEWBOX", props)
+    
     return (
         <div className="PreviewBox" >
             <span className="preview-content">

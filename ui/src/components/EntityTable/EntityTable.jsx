@@ -187,14 +187,16 @@ export class EntityTable extends Component {
       pathname: location.pathname,
       hash: queryString.stringify(parsedHash),
     });
+    
   }
-
+  
   render() {
     const { collection, entityManager, query, intl, result, schema, isEntitySet, sort, updateStatus, writeable } = this.props;
     const { selection } = this.state;
     const visitEntity = schema.isThing() ? this.onEntityClick : undefined;
     const showEmptyComponent = result.total === 0 && query.hasQuery();
     const selectedEntities = selection.map(this.getEntity).filter(e => e !== undefined);
+    const isReconcilable = schema.isA("Person") || schema.isA("Organization")
 
     return (
       <div className="EntityTable">
@@ -220,14 +222,15 @@ export class EntityTable extends Component {
                   onSelect: this.onDocSelected
                 }}
               />
-
-          <EntityReconcileButton
-            actionType="reconcile"
-            navigate={this.navigate}
-          />
-              <Divider />
-            </>
+  </>
           )}
+          {isReconcilable && (
+            <EntityReconcileButton
+              actionType="reconcile"
+              navigate={this.navigate}
+            /> )}
+              <Divider />
+            
           {!schema.isEdge && (
             <DialogToggleButton
               buttonProps={{

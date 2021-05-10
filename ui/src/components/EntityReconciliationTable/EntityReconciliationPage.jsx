@@ -9,7 +9,7 @@ import { withRouter } from "react-router";
 import uniqBy from "lodash/uniqBy";
 
 import entityEditorWrapper from "components/Entity/entityEditorWrapper";
-import {  ErrorSection } from "components/common";
+import { ErrorSection } from "components/common";
 
 import { queryEntities } from "actions";
 import { selectEntitiesResult } from "selectors";
@@ -18,7 +18,9 @@ import getEntityLink from "util/getEntityLink";
 import "./EntityReconciliationPage.scss";
 import QueryNextButton from "./QueryNextButton";
 import ReconciliationTable from "./ReconciliationTable";
-import ReconciliationApi from "./ReconciliationApi"
+import ReconciliationApi from "./ReconciliationApi";
+import {reconcConfig, PropertyMapper} from "./ReconcConfig";
+import ReconcInfo from "./ReconcInfo"
 
 const messages = defineMessages({
   empty: {
@@ -27,38 +29,39 @@ const messages = defineMessages({
   },
 });
 
-const reconcConfig = {
-  wikidata: {
-    url: "https://wikidata.reconci.link/en/api",
-    idProperty: "wikidataId"
-  }
-}
 
 
 export function EntityReconciliationPage(props) {
-  const { result } = props;
-  const [reconcApi] = useState(new ReconciliationApi(reconcConfig["wikidata"]["url"], reconcConfig["wikidata"]["idProperty"])) 
-  const [isInit, setIsInit] = useState(false)
+  const { result, schema } = props;
 
-  
-  
-  // Up to date entities from Aleph
+  const [mapper, setMapper] = useState()
+  console.log(mapper)
+
+  const [reconcApi, setReconcApi] = useState();
+  const [isInit, setIsInit] = useState(false);
+  // Up to date entities from Aleph.
   const entities = result.results.slice(result.offset);
-
-  // Slower reloading entities from reconciliation
+  // Slower reloading entities from reconciliation.
   const to_rec_entities = useMemo(() => entities, [
     result.offset,
     result.shouldLoad,
     result.results.length,
   ]);
-  const [visibleProps, setVisibleProps] = useState(getVisibleProperties(entities));
+  const [visibleProps, setVisibleProps] = useState(
+    getVisibleProperties(entities)
+  );
   const [reconciled, setReconciled] = useState([]);
-
 
   useEffect(() => {
     fetchIfNeeded();
-    init()
+    const map = new PropertyMapper(reconcConfig)
+    setMapper(map)
+    setReconcApi(getReconciliationService(map))
   }, []);
+
+  useEffect(() => {
+    reconcApi && init();
+  }, [reconcApi])
 
   useEffect(() => {
     isInit && fetchReconciliation();
@@ -71,9 +74,11 @@ export function EntityReconciliationPage(props) {
     setVisibleProps(visibleProps || []);
   }, [result.results]);
 
-  async function init(){
-    await reconcApi.fetchServices()
-    setIsInit(true)
+
+
+  async function init() {
+    await reconcApi.fetchServices();
+    setIsInit(true);
   }
 
   async function fetchReconciliation() {
@@ -81,7 +86,6 @@ export function EntityReconciliationPage(props) {
       return;
     }
     const recon_responses = await reconcApi.fetchReconciled(to_rec_entities);
-
     const hashed = {};
     // Combine entities and responses to keep order consistency.
     recon_responses.forEach((rec, i) => {
@@ -92,7 +96,6 @@ export function EntityReconciliationPage(props) {
       };
     });
 
-    console.log("RECONCILED", hashed);
     setReconciled(hashed);
   }
 
@@ -104,12 +107,28 @@ export function EntityReconciliationPage(props) {
     }
   }
 
-  function onEntityClick(entity) {
-    if (entity) {
-      const { history } = props;
-      history.push(getEntityLink(entity));
-    }
+
+
+  function getReconciliationService(propertyMapper) {
+    return new ReconciliationApi(
+      propertyMapper.url,
+      propertyMapper.idProperty,
+      propertyMapper.getTypeMapping(schema.name),
+      propertyMapper.getPropertyMapping(schema.schemata)
+    )
   }
+
+  function handleChangeSvc(svcName){
+    console.log(svcName)
+    setIsInit(false)
+    const map =  new PropertyMapper(reconcConfig, svcName)
+    setMapper(map)
+    setReconcApi(getReconciliationService(map))
+    setReconciled([])
+  }
+
+
+ // function getPreviousEntities() {}
 
   function getVisibleProperties(entities) {
     if (!entities.length) {
@@ -121,7 +140,7 @@ export function EntityReconciliationPage(props) {
       schema.getProperty(name)
     );
     const featuredProps = schema.getFeaturedProperties();
-    
+
     const filledProps = entities
       .map((entity) => entity.getProperties())
       .reduce((acc, props) => [...acc, ...props]);
@@ -134,36 +153,15 @@ export function EntityReconciliationPage(props) {
     return fullList.filter((prop) => !prop.stub && !prop.hidden);
   }
 
-  function updateQuery(newQuery) {
-    const { history, location } = props;
-    history.push({
-      pathname: location.pathname,
-      search: newQuery.toLocation(),
-      hash: location.hash,
-    });
-  }
-
-  function getEntity(entityId) {
-    const { result } = props;
-    return result.results.find(({ id }) => entityId === id);
-  }
-
   const {
-    entityManager,
     query,
     intl,
-    schema,
-    isEntitySet,
-    sort,
-    updateStatus,
-    writeable,
     queryEntities,
     updateEntity,
   } = props;
 
-  const visitEntity = schema.isThing() ? onEntityClick : undefined;
   const showEmptyComponent = result.total === 0 && query.hasQuery();
- console.log(isInit)
+
   return (
     <div className="EntityTable">
       <div className="EntityTable__content">
@@ -176,7 +174,13 @@ export function EntityReconciliationPage(props) {
           />
         )}
         {!showEmptyComponent && isInit && (
+          
           <>
+            <ReconcInfo
+              activeSvcName={mapper.svc_name} 
+              activeSchema={schema}
+              handleChangeSvc={handleChangeSvc}
+              allServices={mapper.getAllServices()}/>
             <ReconciliationTable
               entities={entities}
               visibleProps={visibleProps}

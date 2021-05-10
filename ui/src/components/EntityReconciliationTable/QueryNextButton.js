@@ -3,9 +3,8 @@ import { FormattedMessage, injectIntl } from 'react-intl';
 import { Waypoint } from 'react-waypoint';
 import { Button } from '@blueprintjs/core';
 
-//import './QueryInfiniteLoad.scss';
-
 class QueryNextButton extends Component {
+  // Disclosure: This Component was kept from the original implementation.
   constructor(props) {
     super(props);
     this.getMoreResults = this.getMoreResults.bind(this);

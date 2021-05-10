@@ -9,15 +9,24 @@ export default function CandidateSelection(props) {
     const { entity } = props
     const reconId = entity?.getFirst(reconcApi.idProperty)
     const [hoverId, setHoverId] = useState()
+    console.log(candidates)
+
 
     function handleAccept(candidateId) {
         const modified = entity.clone()
-        modified.setProperty(idProperty, candidateId)
+        console.log(entity, idProperty)
+        let propVal  = candidateId;
+
+        if (idProperty === "opencorporatesUrl"){
+            // This is not very beautiful, but it works. The issue is, that Aleph does not persist IDs for opencorporates, but URLs.
+            propVal = "https://opencorporates.com/" + candidateId
+        }
+        modified.setProperty(idProperty, propVal)
+
         updateEntity(modified)
     }
 
     function unHover() {
-        console.log("UNHOVER")
         setHoverId(undefined)
     }
 
@@ -30,7 +39,7 @@ export default function CandidateSelection(props) {
         const { id, match } = candidate
 
         return (
-            <div className="recCandidate" key={id}>
+            <div className={"recCandidate"}  key={id}>
                 {id === hoverId && (
                     <PreviewBox
 
@@ -40,12 +49,12 @@ export default function CandidateSelection(props) {
                     />
 
                 )}
-                <li  >
+                <li >
                     <div className="candidateName" onMouseEnter={() => renderTooltip(id)} onMouseLeave={unHover}>
                         <a href={reconcApi.directLink(id)} target="_blank" rel="noopener noreferrer">{candidate.name}</a></div>
                     <p>Score: {Math.round(candidate.score)}</p>
 
-                    <button className="candidateAccept" onClick={() => handleAccept(id)}>
+                    <button className={`candidateAccept ${match? "recMatch" : ""}`} onClick={() => handleAccept(id)}>
                         {match ? "✔✔" : "✔"}
                     </button>
                 </li>

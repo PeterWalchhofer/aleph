@@ -1,19 +1,15 @@
+
+
+
 class ReconciliationApi {
-    constructor(url, idProperty) {
+    constructor(url, idProperty, type, propMapping) {
         this.url = url
-        this.view = ""
         this.idProperty = idProperty // e.g. wikidataId in FtM schema
         this.isInit = false
+        this.type = type
 
-        this.mapping = {
-            birthDate: "P569",
-            birthPlace: "P19",
-            email: "P968",
-            firstName: "P735",
-            lastName: "P734",
-            title: "P512",
-            website: "P856"
-        }
+        this.propMapping = propMapping
+
         this.directLink = this.directLink.bind(this)
         this.getPreviewUrl = this.getPreviewUrl.bind(this)
     }
@@ -44,7 +40,7 @@ class ReconciliationApi {
     }
 
     async fetchReconciled(entities) {
-        const queries = entities.map(entity => this.createQuery(entity, "Q5", this.mapping))
+        const queries = entities.map(entity => this.createQuery(entity, this.type, this.propMapping))
         const batches = this.create_batch_queries(queries)
         const results = []
 
@@ -65,10 +61,13 @@ class ReconciliationApi {
             })
         })
         const reconciled = await result.json()
-
+        console.log(reconciled)
         // API returns map with keys "q0", "q1",... for some reason we need to sort them before putting the results into an array.
-        const ordered = Object.keys(reconciled).map(key =>
-            Number(key.substr(1))).sort((a, b) => a - b).map(key => reconciled["q" + key])
+        const ordered = Object.keys(reconciled)
+            .filter(key => key.match("q\d*"))
+            .map(key => Number(key.substr(1)))
+            .sort((a, b) => a - b).map(key => reconciled["q" + key])
+
         return ordered
     }
 
@@ -102,7 +101,7 @@ class ReconciliationApi {
         const batches = []
         const max = Math.ceil(queries.length / batch_size)
 
-        for (start = 0, end = batch_size,  i = 0;
+        for (start = 0, end = batch_size, i = 0;
             i < max;
             i++, start += batch_size, end += batch_size) {
             const batch_query = {}
@@ -111,7 +110,7 @@ class ReconciliationApi {
             })
             batches.push(batch_query)
         }
-       
+
         return batches
     }
 }
