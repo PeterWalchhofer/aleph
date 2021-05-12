@@ -2,7 +2,7 @@
 export const reconcConfig = {
   services: {
     wikidata: {
-      url: "https://wikidata.reconci.link/en/api",
+      url: "https://wikidata.reconci.link/{CountryCode}/api",
       idProperty: "wikidataId",
       mapping: {
         propMapping: {
@@ -73,14 +73,15 @@ export const reconcConfig = {
 }
 
 export class PropertyMapper {
+  // This class acts on the config for some convinience.
 
-  constructor(config, service = "wikidata") {
+  constructor(config, countryCode="en", service = "wikidata") {
     this.svc_name = service
     this.config = config
     this.svc_config = config.services[service];
     this.propMapping = this.svc_config["mapping"]["propMapping"]
     this.typeMapping = this.svc_config["mapping"]["typeMapping"]
-    this.url = this.svc_config["url"]
+    this.url = this.svc_config["url"].replace("{CountryCode}", countryCode)
     this.idProperty = this.svc_config["idProperty"]
   }
 

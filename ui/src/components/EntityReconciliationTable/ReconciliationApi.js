@@ -1,6 +1,3 @@
-
-
-
 class ReconciliationApi {
     constructor(url, idProperty, type, propMapping) {
         this.url = url
@@ -32,10 +29,6 @@ class ReconciliationApi {
     }
 
     getPreviewUrl(id) {
-        if (!this.isInit) {
-            console.log("PREVIEW ACCESSES BEFORE INITIALIZATION")
-            return
-        }
         return this.preview["url"].replace("{{id}}", id)
     }
 
@@ -61,10 +54,9 @@ class ReconciliationApi {
             })
         })
         const reconciled = await result.json()
-        console.log(reconciled)
         // API returns map with keys "q0", "q1",... for some reason we need to sort them before putting the results into an array.
         const ordered = Object.keys(reconciled)
-            .filter(key => key.match("q\d*"))
+            .filter(key => key.match(/q\d*/))
             .map(key => Number(key.substr(1)))
             .sort((a, b) => a - b).map(key => reconciled["q" + key])
 
