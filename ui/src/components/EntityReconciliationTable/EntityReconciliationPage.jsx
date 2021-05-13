@@ -48,10 +48,10 @@ export function EntityReconciliationPage(props) {
     isMountedRef.current = true;
     fetchIfNeeded();
     const map = new PropertyMapper(reconcConfig, intl.locale);
-    if (isMountedRef.current) {
-      setMapper(map);
-      setReconcApi(getReconciliationService(map));
-    }
+
+    isMountedRef.current && setMapper(map);
+    isMountedRef.current && setReconcApi(getReconciliationService(map));
+  
     return () => isMountedRef.current = false;
   }, []);
 

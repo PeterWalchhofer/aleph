@@ -70,27 +70,31 @@ export function ReconciliationTable(props) {
         return ["Reconcile", ...headerCells];
     }
 
+    function rendereSeparator(key) {
+        return  <span className="separator" key={"s" +key}> · </span>
+    }
+
     function renderValue(entityCell) {
         const propType = entityCell.data.property.type
-
+        
         let propCb;
 
         switch (propType.name) {
             case "url":
                 propCb = (val, idx) =>
-                    <span>
-                        <a key={idx} href={val}>{val}</a>
+                    <span key={idx}>
+                        <a  href={val}>{val}</a>
                     </span>
                 break;
 
             default:
                 propCb = (val, idx) => <span key={idx}>{val}</span>
         }
-        const separator = <span className="separator"> · </span>
+        
         const values = entityCell.value
             .map(propCb)
-            .reduce((acc, elem) => {
-                return acc === null ? [elem] : [...acc, separator, elem]
+            .reduce((acc, elem, idx) => {
+                return acc === null ? [elem] : [...acc, rendereSeparator(idx), elem]
             }, null)
         // Reducer logic from https://stackoverflow.com/questions/44959437/join-jsx-with-jsx/44959541#44959541
 
@@ -112,6 +116,7 @@ export function ReconciliationTable(props) {
                     updateEntity={updateEntity} />
             </td>
         )
+
         cells.push(entityRow.map((entityCell, colIdx) =>
             <td row={idx + 1} col={colIdx + 1} key={`c${colIdx + 1}r${idx + 1}`} >
                 <div className="TableEditor__overflow-container">
@@ -133,7 +138,7 @@ export function ReconciliationTable(props) {
                 <table className="data-grid">
                     <thead>
                         <tr>
-                            {getHeaderRow().map((col, idx) => <th row="0" col={idx} key={0 + idx} className="header">{col}</th>)}
+                            {getHeaderRow().map((col, idx) => <th row="0" col={idx} key={"c0r" + idx} className="header">{col}</th>)}
                         </tr>
                     </thead>
 
