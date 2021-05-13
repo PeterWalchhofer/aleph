@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Spinner } from '@blueprintjs/core';
 
 export default function PreviewBox(props) {
-    const { url, width, height } = props;
+    const { url, width, height , title} = props;
     const [isLoading, setIsLoading] = useState(true)
 
     function onLoad() {
@@ -18,13 +18,14 @@ export default function PreviewBox(props) {
                     </div>)}
 
                 <iframe src={url}
-                    titile="Reconciliation Candidate"
+                    titile={"Reconciliation Candidate of " + title}
                     frameBorder="0"
                     width={width + 10}
                     height={height + 20}
                     onLoad={onLoad}
-                    sandbox="" />
-
+                    loading="eager"
+                    sandbox="allow-same-origin" 
+                    />
 
             </span>
         </div>

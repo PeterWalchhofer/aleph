@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { injectIntl } from 'react-intl';
-import {  Button } from '@blueprintjs/core';
+import { Button } from '@blueprintjs/core';
 import { compose } from 'redux';
 
 import CandidateSelection from './CandidateSelection';
@@ -9,40 +9,41 @@ import "./EntityReconciliationPage"
 
 
 export function ReconciliationTable(props) {
+    // The table code was partially adapted from https://github.com/alephdata/react-ftm/blob/master/src/components/EntityTable/TableEditor.tsx 
+    // but strongly modified to fit my purposes.
     const { entities, visibleProps, reconciled } = props
-    const [headerRow, setHeaderRow] = useState([])
     const [entityRows, setEntityRows] = useState([])
 
 
     useEffect(() => {
-        if (entities.length > 0 & visibleProps.length >0 ){
-        setHeaderRow(getHeaderRow())
-        setEntityRows(entities2rows())
-        console.log("RERENDER")
-        }
-        //entities2rows()
-    }, [entities, props.reconciled])
+        function entities2rows() {
+            const rows = []
+            entities.forEach((ent) => {
+                const propCells = visibleProps.map(property => {
+                    let values = ent.getProperty(property.name);
 
-    function entities2rows() {
-        const rows = []
-        entities.forEach((ent, idx) => {
-            const propCells = visibleProps.map(property => {
-                let values = ent.getProperty(property.name);
-               
-                if (property.type.name === 'entity') {
-                    values = values.map((v) => typeof v === 'string' ? v : v.id);
-                }
+                    if (property.type.name === 'entity') {
+                        values = values.map((v) => typeof v === 'string' ? v : v.id);
+                    }
 
-                return ({
-                    value: values,
-                    data: { entity: ent, property },
+                    return ({
+                        value: values,
+                        data: { entity: ent, property },
+                    })
                 })
+                rows.push(propCells)
             })
-            rows.push(propCells)
-        })
-        return rows
+            return rows
 
-    }
+        }
+
+        if (entities.length > 0 & visibleProps.length > 0) {
+            //    setHeaderRow(getHeaderRow())
+            setEntityRows(entities2rows())
+        }
+    }, [entities, reconciled, visibleProps])
+
+
 
 
     function renderColumnHeader(property) {
@@ -78,11 +79,11 @@ export function ReconciliationTable(props) {
             case "url":
                 propCb = (val, idx) =>
                     <span>
-                        <a key = {idx} href={val}>{val}</a>
+                        <a key={idx} href={val}>{val}</a>
                     </span>
                 break;
-                
-            default: 
+
+            default:
                 propCb = (val, idx) => <span key={idx}>{val}</span>
         }
         const separator = <span className="separator"> · </span>
@@ -132,7 +133,7 @@ export function ReconciliationTable(props) {
                 <table className="data-grid">
                     <thead>
                         <tr>
-                            {headerRow.map((col, idx) => <th row="0" col={idx} key={"0"+idx} className="header">{col}</th>)}
+                            {getHeaderRow().map((col, idx) => <th row="0" col={idx} key={0 + idx} className="header">{col}</th>)}
                         </tr>
                     </thead>
 

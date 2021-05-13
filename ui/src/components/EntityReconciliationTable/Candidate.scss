@@ -43,8 +43,6 @@
     border-bottom: 1px dotted black;
 
     .preview-content {
-      visibility: visible;
-      //width: 120px;
       background-color: $aleph-facet-background;
       color: black;
       text-align: center;
@@ -54,10 +52,9 @@
       top: -120px;
       left: 100px;
 
-      /* Position the tooltip */
       position: absolute;
       z-index: 1;
-
+      
       .spinner {
         position: absolute;
         top: 50%;
