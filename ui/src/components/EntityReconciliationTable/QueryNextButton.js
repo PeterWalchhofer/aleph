@@ -4,7 +4,7 @@ import { Waypoint } from 'react-waypoint';
 import { Button } from '@blueprintjs/core';
 
 class QueryNextButton extends Component {
-  // Disclosure: This Component was kept from the original implementation.
+  // Disclosure: This Component was kept from the original implementation. Only minor adjustments were made.
   constructor(props) {
     super(props);
     this.getMoreResults = this.getMoreResults.bind(this);

@@ -8,7 +8,7 @@ export default function ReconcInfo(props) {
         const disabled = !svc.supportedTypes.includes(activeSchema.name)
 
         return (
-            <option name="recService" disabled={disabled}>
+            <option key={svc.name} name="recService" disabled={disabled}>
                 {svc.name}
             </option>
         )

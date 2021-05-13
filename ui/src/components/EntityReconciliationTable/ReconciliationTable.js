@@ -103,7 +103,7 @@ export function ReconciliationTable(props) {
         const entity = entityRow[0].data.entity
         const cells = []
         cells.push(
-            <td col={0} row={idx} className="reconcileCell">
+            <td col={0} row={idx} key={`c0r${idx}`} className="reconcileCell">
                 <CandidateSelection
                     candidates={reconciled[entity?.id]}
                     entity={entity}
@@ -113,7 +113,7 @@ export function ReconciliationTable(props) {
             </td>
         )
         cells.push(entityRow.map((entityCell, colIdx) =>
-            <td row={idx + 1} col={colIdx + 1} >
+            <td row={idx + 1} col={colIdx + 1} key={`c${colIdx + 1}r${idx + 1}`} >
                 <div className="TableEditor__overflow-container">
                     <span className="PropertyValues">
                         {renderValue(entityCell)}

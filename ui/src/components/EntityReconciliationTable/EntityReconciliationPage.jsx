@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { defineMessages, injectIntl } from "react-intl";
 
 import _ from "lodash";
@@ -30,54 +30,68 @@ const messages = defineMessages({
 
 export function EntityReconciliationPage(props) {
   const { result, schema, intl } = props;
-
+  const [shouldReloadRec, setShouldReloadRec] = useState(false);
   const [mapper, setMapper] = useState();
 
   const [reconcApi, setReconcApi] = useState();
   const [isInit, setIsInit] = useState(false);
-  // Up to date entities from Aleph.
   const entities = result.results.slice(result.offset);
-  // Slower reloading entities from reconciliation.
-  const to_rec_entities = useMemo(
-    () => entities,
-    [result.offset, result.shouldLoad, result.results.length]
-  );
+  const isMountedRef = useRef(null);
+
   const [visibleProps, setVisibleProps] = useState(
     getVisibleProperties(entities)
   );
   const [reconciled, setReconciled] = useState([]);
 
   useEffect(() => {
+    console.log("MOUNT")
+    isMountedRef.current = true;
     fetchIfNeeded();
     const map = new PropertyMapper(reconcConfig, intl.locale);
-    setMapper(map);
-    setReconcApi(getReconciliationService(map));
+    if (isMountedRef.current) {
+      setMapper(map);
+      setReconcApi(getReconciliationService(map));
+    }
+    return () => isMountedRef.current = false;
   }, []);
 
   useEffect(() => {
-    reconcApi && init();
+    setShouldReloadRec(true);
+  }, [result.offset, result.shouldLoad, result.results.length]);
+
+  useEffect(() => {
+    async function init() {
+      await reconcApi.fetchServices();
+      isMountedRef.current && setIsInit(true);
+    }
+    isMountedRef.current = true;
+
+    reconcApi &&  init();
+
+    
+    return () => isMountedRef.current = false;
   }, [reconcApi]);
 
   useEffect(() => {
-    isInit && fetchReconciliation();
-  }, [to_rec_entities, isInit]);
+    isMountedRef.current = true;
+    isInit && shouldReloadRec && isMountedRef.current && fetchReconciliation();
+    
+    return () => isMountedRef.current = false;
+  }, [isInit, shouldReloadRec]);
 
   useEffect(() => {
-    const { result } = props;
-
-    const visibleProps = getVisibleProperties(result.results);
+    const visibleProps = getVisibleProperties(entities);
     setVisibleProps(visibleProps || []);
+
+    
   }, [result.results]);
 
-  async function init() {
-    await reconcApi.fetchServices();
-    setIsInit(true);
-  }
-
   async function fetchReconciliation() {
-    if (!to_rec_entities) {
+    if (!entities) {
       return;
     }
+    setShouldReloadRec(false);
+    const to_rec_entities = entities;
     const recon_responses = await reconcApi.fetchReconciled(to_rec_entities);
     const hashed = {};
     // Combine entities and responses to keep order consistency.
@@ -115,6 +129,7 @@ export function EntityReconciliationPage(props) {
     setMapper(map);
     setReconcApi(getReconciliationService(map));
     setReconciled([]);
+    setShouldReloadRec(true);
   }
 
   function updateQuery(newQuery) {
@@ -204,13 +219,13 @@ export function EntityReconciliationPage(props) {
               result={result}
               fetch={queryEntities}
               loadOnScroll={false}
-              next={false}
             />
             <QueryNextButton
               query={query}
               result={result}
               fetch={queryEntities}
               loadOnScroll={false}
+              next={false}
             />
           </>
         )}
