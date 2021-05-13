@@ -62,7 +62,7 @@
     "compile-translations": "formatjs compile-folder i18n/translations/raw i18n/translations/compiled",
     "concat-translations": "node i18n/concatTranslations.js"
   },
-  "proxy": "http://api:5000/",
+  "proxy": "http://localhost:5000/",
   "eslintConfig": {
     "extends": "react-app"
   },
