@@ -40,7 +40,8 @@ class QueryNextButton extends Component {
     
     const { loadOnScroll = true, result, next=true} = this.props;
     const canLoadMore = result && result.next && !result.isPending && !result.isError && result.results.length < result.total;
-    if (canLoadMore) {
+    const canLoadPrev = result?.offset > 0
+    if ((next & canLoadMore) || (!next & canLoadPrev)) {
       if (loadOnScroll) {
         return (
           <Waypoint
