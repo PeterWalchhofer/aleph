@@ -19,7 +19,7 @@ export const reconcConfig = {
             religion: "P140"
           },
           Thing: {
-            adress: "P6375",
+            address: "P6375",
           },
           LegalEntity: {
             email: "P968",
@@ -48,7 +48,8 @@ export const reconcConfig = {
           Person: "Q5",
           Organization: "Q43229",
           LegalEntity: "Q3778211",
-          Company: "Q783794",
+          // Chose the more generic type 'Organization' as we have too fine grained types ind WD: businesses and companies.
+          Company: "Q43229", 
           PublicBody: "Q2659904"
         },
       },

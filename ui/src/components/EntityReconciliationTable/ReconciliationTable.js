@@ -38,7 +38,6 @@ export function ReconciliationTable(props) {
         }
 
         if (entities.length > 0 & visibleProps.length > 0) {
-            //    setHeaderRow(getHeaderRow())
             setEntityRows(entities2rows())
         }
     }, [entities, reconciled, visibleProps])
