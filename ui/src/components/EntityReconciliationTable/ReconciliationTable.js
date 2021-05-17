@@ -9,7 +9,7 @@ import "./EntityReconciliationPage"
 
 
 export function ReconciliationTable(props) {
-    // The table code was partially adapted from https://github.com/alephdata/react-ftm/blob/master/src/components/EntityTable/TableEditor.tsx 
+    // The table code was partially adopted from https://github.com/alephdata/react-ftm/blob/master/src/components/EntityTable/TableEditor.tsx 
     // but strongly modified to fit my purposes.
     const { entities, visibleProps, reconciled } = props
     const [entityRows, setEntityRows] = useState([])
