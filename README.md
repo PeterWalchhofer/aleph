@@ -13,13 +13,13 @@ aleph createuser --name="Alice" \
                  --password=123abc \
                  user@example.com
 ```
-As I did not test if the project runs in normal mode (regarding the CORS policy) it is advised to run the PoC in development mode.
+As this is just PoC, it as advised to run the project in development mode, as I did not test if the project runs on production deployment (regarding the CORS policy,..):
 
 3. Leave shell 
-4. To run the server:
+4. Run:
 	1. Use `make api` to run Aleph's API
 	2. Use `make worker` to run a Worker
-	3. Cd to `/ui` and `npm start`
+	3. Cd to `/ui` and run `npm start`
 5. Login and use the service.
 
 ## Code
