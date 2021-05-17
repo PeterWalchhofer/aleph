@@ -19,7 +19,7 @@ ui/**/*.css
 services/elasticsearch/secrets
 
 celerybeat-schedule*
-aleph.env
+#aleph.env
 test_settings.py
 .coverage
 
