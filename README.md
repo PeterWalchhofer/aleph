@@ -19,5 +19,8 @@ As I did not test if the project runs in normal mode (regarding the CORS policy)
 4. To run the server:
 	1. Use `make api` to run Aleph's API
 	2. Use `make worker` to run a Worker
-	3. Cd to /ui and `npm start`
+	3. Cd to `/ui` and `npm start`
 5. Login and use the service.
+
+## Code
+The code that has been additionally written can be primarily found at `aleph\ui\src\components\EntityReconciliationTable`.

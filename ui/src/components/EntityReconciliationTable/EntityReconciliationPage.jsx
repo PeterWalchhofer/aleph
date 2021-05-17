@@ -44,7 +44,6 @@ export function EntityReconciliationPage(props) {
   const [reconciled, setReconciled] = useState([]);
 
   useEffect(() => {
-    console.log("MOUNT")
     isMountedRef.current = true;
     fetchIfNeeded();
     const map = new PropertyMapper(reconcConfig, intl.locale);
